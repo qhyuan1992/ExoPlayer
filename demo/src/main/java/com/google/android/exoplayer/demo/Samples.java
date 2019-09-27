@@ -226,7 +226,7 @@ import java.util.Locale;
   };
 
   public static final Sample[] MISC = new Sample[] {
-    new Sample("Dizzy", "http://html5demos.com/assets/dizzy.mp4", Util.TYPE_OTHER),
+    new Sample("Dizzy", "https://media.w3.org/2010/05/sintel/trailer.mp4", Util.TYPE_OTHER),
     new Sample("Apple AAC 10s", "https://devimages.apple.com.edgekey.net/"
         + "streaming/examples/bipbop_4x3/gear0/fileSequence0.aac", Util.TYPE_OTHER),
     new Sample("Apple TS 10s", "https://devimages.apple.com.edgekey.net/streaming/examples/"

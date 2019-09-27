@@ -35,10 +35,10 @@ import java.util.concurrent.LinkedBlockingDeque;
   private static final int INITIAL_SCRATCH_SIZE = 32;
 
   private final Allocator allocator;
-  private final int allocationLength;
+  private final int allocationLength; // 每个Allocation的最大字节数
 
-  private final InfoQueue infoQueue;
-  private final LinkedBlockingDeque<Allocation> dataQueue;
+  private final InfoQueue infoQueue; // 维护所有的sample的信息 里面用数组承载所有的sample
+  private final LinkedBlockingDeque<Allocation> dataQueue; // 队列包含所有的sample
   private final SampleExtrasHolder extrasHolder;
   private final ParsableByteArray scratch;
 
@@ -47,7 +47,7 @@ import java.util.concurrent.LinkedBlockingDeque;
 
   // Accessed only by the loading thread.
   private long totalBytesWritten;
-  private Allocation lastAllocation;
+  private Allocation lastAllocation; // 最后一个Allocation
   private int lastAllocationOffset;
 
   /**
@@ -434,9 +434,9 @@ import java.util.concurrent.LinkedBlockingDeque;
    * number of bytes that can actually be appended.
    */
   private int prepareForAppend(int length) {
-    if (lastAllocationOffset == allocationLength) {
+    if (lastAllocationOffset == allocationLength) { // 分配的Allocation已经全部填满，也可能是初次走到这儿
       lastAllocationOffset = 0;
-      lastAllocation = allocator.allocate();
+      lastAllocation = allocator.allocate(); // 重新分配一个
       dataQueue.add(lastAllocation);
     }
     return Math.min(length, allocationLength - lastAllocationOffset);

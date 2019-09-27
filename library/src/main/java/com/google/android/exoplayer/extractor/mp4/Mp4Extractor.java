@@ -359,36 +359,38 @@ public final class Mp4Extractor implements Extractor, SeekMap {
     }
     Mp4Track track = tracks[trackIndex];
     TrackOutput trackOutput = track.trackOutput;
-    int sampleIndex = track.sampleIndex;
-    long position = track.sampleTable.offsets[sampleIndex];
+    int sampleIndex = track.sampleIndex; // 当前解析到的sample的index
+    long position = track.sampleTable.offsets[sampleIndex]; // 这个sample在文件中的位置
     long skipAmount = position - input.getPosition() + sampleBytesWritten;
     if (skipAmount < 0 || skipAmount >= RELOAD_MINIMUM_SEEK_DISTANCE) {
       positionHolder.position = position;
       return RESULT_SEEK;
     }
-    input.skipFully((int) skipAmount);
-    sampleSize = track.sampleTable.sizes[sampleIndex];
-    if (track.track.nalUnitLengthFieldLength != -1) {
+    input.skipFully((int) skipAmount); //
+    sampleSize = track.sampleTable.sizes[sampleIndex]; // sample的大小
+    if (track.track.nalUnitLengthFieldLength != -1) { // h.264
       // Zero the top three bytes of the array that we'll use to parse nal unit lengths, in case
       // they're only 1 or 2 bytes long.
       byte[] nalLengthData = nalLength.data;
       nalLengthData[0] = 0;
       nalLengthData[1] = 0;
       nalLengthData[2] = 0;
-      int nalUnitLengthFieldLength = track.track.nalUnitLengthFieldLength;
+      int nalUnitLengthFieldLength = track.track.nalUnitLengthFieldLength; // h264的nalu的size用多少个字节表示
       int nalUnitLengthFieldLengthDiff = 4 - track.track.nalUnitLengthFieldLength;
       // NAL units are length delimited, but the decoder requires start code delimited units.
       // Loop until we've written the sample to the track output, replacing length delimiters with
       // start codes as we encounter them.
+      // 用0x00000001来分割nalu
+      // sample可能包含多个nalu，每多读一个nalu要多算一个nalu头(一般是4字节)
       while (sampleBytesWritten < sampleSize) {
-        if (sampleCurrentNalBytesRemaining == 0) {
+        if (sampleCurrentNalBytesRemaining == 0) { // 先读取nalu的长度到sampleCurrentNalBytesRemaining
           // Read the NAL length so that we know where we find the next one.
-          input.readFully(nalLength.data, nalUnitLengthFieldLengthDiff, nalUnitLengthFieldLength);
+          input.readFully(nalLength.data, nalUnitLengthFieldLengthDiff, nalUnitLengthFieldLength); // 读取nalu的长度
           nalLength.setPosition(0);
           sampleCurrentNalBytesRemaining = nalLength.readUnsignedIntToInt();
           // Write a start code for the current NAL unit.
           nalStartCode.setPosition(0);
-          trackOutput.sampleData(nalStartCode, 4);
+          trackOutput.sampleData(nalStartCode, 4); // 写入nalu头
           sampleBytesWritten += 4;
           sampleSize += nalUnitLengthFieldLengthDiff;
         } else {
@@ -426,7 +428,7 @@ public final class Mp4Extractor implements Extractor, SeekMap {
       if (sampleIndex == track.sampleTable.sampleCount) {
         continue;
       }
-
+      // 找到当前正在解析的sample 的索引最小的那个track
       long trackSampleOffset = track.sampleTable.offsets[sampleIndex];
       if (trackSampleOffset < earliestSampleOffset) {
         earliestSampleOffset = trackSampleOffset;
@@ -463,7 +465,7 @@ public final class Mp4Extractor implements Extractor, SeekMap {
     public final TrackSampleTable sampleTable;
     public final TrackOutput trackOutput;
 
-    public int sampleIndex;
+    public int sampleIndex; // 当前解析的sample的索引
 
     public Mp4Track(Track track, TrackSampleTable sampleTable, TrackOutput trackOutput) {
       this.track = track;
