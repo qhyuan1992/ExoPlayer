@@ -24,10 +24,10 @@ import java.nio.charset.Charset;
  */
 public final class ParsableByteArray {
 
-  public byte[] data;
+  public byte[] data; // 数据
 
-  private int position;
-  private int limit;
+  private int position; // 当前为重
+  private int limit;  // 有效范围，可能比data length小
 
   /** Creates a new instance that initially has no backing data. */
   public ParsableByteArray() {}

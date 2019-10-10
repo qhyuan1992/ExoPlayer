@@ -35,10 +35,10 @@ import java.util.concurrent.LinkedBlockingDeque;
   private static final int INITIAL_SCRATCH_SIZE = 32;
 
   private final Allocator allocator;
-  private final int allocationLength; // 每个Allocation的最大字节数
+  private final int allocationLength; // 每个Allocation的最大字节数，固定长度，64
 
   private final InfoQueue infoQueue; // 维护所有的sample的信息 里面用数组承载所有的sample
-  private final LinkedBlockingDeque<Allocation> dataQueue; // 队列包含所有的sample
+  private final LinkedBlockingDeque<Allocation> dataQueue; // 队列包含所有的sample，Allocation
   private final SampleExtrasHolder extrasHolder;
   private final ParsableByteArray scratch;
 
@@ -48,7 +48,7 @@ import java.util.concurrent.LinkedBlockingDeque;
   // Accessed only by the loading thread.
   private long totalBytesWritten;
   private Allocation lastAllocation; // 最后一个Allocation
-  private int lastAllocationOffset;
+  private int lastAllocationOffset; // 占用的字节buffer在当前Allocation的偏移
 
   /**
    * @param allocator An {@link Allocator} from which allocations for sample data can be obtained.
@@ -451,16 +451,21 @@ import java.util.concurrent.LinkedBlockingDeque;
 
     private int capacity;
 
+    // sample的索引和对应的sample在rolling buffer中的position的关系
     private long[] offsets;
+    // sample的索引和对应的sample的大小
     private int[] sizes;
+    // sample的索引和对应的sample的flag：是否是关键帧
     private int[] flags;
+    // sample的索引和对应的sample的pts
     private long[] timesUs;
     private byte[][] encryptionKeys;
 
-    private int queueSize;
-    private int absoluteReadIndex;
-    private int relativeReadIndex;
-    private int relativeWriteIndex;
+    private int queueSize; // 队列中有几个sample；也就是写端的index
+    // 因为在播放过程中总会维持个平衡，读出来的buffer也会被消费
+    private int absoluteReadIndex; // 数组实现的环形队列；这个标识真正的当前sample的索引
+    private int relativeReadIndex; // 在这个数组中的读索引
+    private int relativeWriteIndex; // 在这个数组中的写索引
 
     public InfoQueue() {
       capacity = SAMPLE_CAPACITY_INCREMENT;

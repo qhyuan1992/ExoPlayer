@@ -199,8 +199,11 @@ public final class ExtractorSampleSource implements SampleSource, SampleSourceRe
   }
 
   private final ExtractorHolder extractorHolder;
+  // 内存分配器：分配Allocation
   private final Allocator allocator;
+  // 这个值用于限制Allocator分配的内存的上限，超过上限就wait直到有新的空间
   private final int requestedBufferSize;
+  // trunk集合，键为trunk的id，值为TrackOutput，包含了音频或视频的所有信息
   private final SparseArray<InternalTrackOutput> sampleQueues;
   private final int minLoadableRetryCount;
   private final Uri uri;
@@ -593,7 +596,7 @@ public final class ExtractorSampleSource implements SampleSource, SampleSourceRe
   }
 
   // ExtractorOutput implementation.
-
+  // 获得某个轨道的TrackOutput
   @Override
   public TrackOutput track(int id) {
     InternalTrackOutput sampleQueue = sampleQueues.get(id);
@@ -604,11 +607,13 @@ public final class ExtractorSampleSource implements SampleSource, SampleSourceRe
     return sampleQueue;
   }
 
+  // 通知track创建完成
   @Override
   public void endTracks() {
     tracksBuilt = true;
   }
 
+  // 通知seek表创建完成
   @Override
   public void seekMap(SeekMap seekMap) {
     this.seekMap = seekMap;
@@ -777,6 +782,7 @@ public final class ExtractorSampleSource implements SampleSource, SampleSourceRe
 
   /**
    * Loads the media stream and extracts sample data from it.
+   * Loadable实现，主要实现load方法进行加载
    */
   private static class ExtractingLoadable implements Loadable {
 
@@ -813,6 +819,7 @@ public final class ExtractorSampleSource implements SampleSource, SampleSourceRe
       return loadCanceled;
     }
 
+    // Loadable在load时就是从文件解析音视频字节流的过程
     @Override
     public void load() throws IOException, InterruptedException {
       int result = Extractor.RESULT_CONTINUE;
@@ -831,7 +838,9 @@ public final class ExtractorSampleSource implements SampleSource, SampleSourceRe
             pendingExtractorSeek = false;
           }
           while (result == Extractor.RESULT_CONTINUE && !loadCanceled) {
+            // allocator分配所有空间大于requestedBufferSize则wait
             allocator.blockWhileTotalBytesAllocatedExceeds(requestedBufferSize);
+            // 解析的过程中 allocator 会分配新的buffer
             result = extractor.read(input, positionHolder);
             // TODO: Implement throttling to stop us from buffering data too often.
           }

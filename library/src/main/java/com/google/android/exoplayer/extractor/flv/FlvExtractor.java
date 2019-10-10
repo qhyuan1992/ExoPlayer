@@ -32,18 +32,18 @@ public final class FlvExtractor implements Extractor, SeekMap {
 
   // Header sizes.
   private static final int FLV_HEADER_SIZE = 9;
-  private static final int FLV_TAG_HEADER_SIZE = 11;
+  private static final int FLV_TAG_HEADER_SIZE = 11; // tag头部，2-4字节表示tag后面的内容
 
   // Parser states.
-  private static final int STATE_READING_FLV_HEADER = 1;
-  private static final int STATE_SKIPPING_TO_TAG_HEADER = 2;
-  private static final int STATE_READING_TAG_HEADER = 3;
-  private static final int STATE_READING_TAG_DATA = 4;
+  private static final int STATE_READING_FLV_HEADER = 1; // 目前在解析FLV文件头
+  private static final int STATE_SKIPPING_TO_TAG_HEADER = 2; // 跳到下一个TAG头
+  private static final int STATE_READING_TAG_HEADER = 3; // 在解析TAG头
+  private static final int STATE_READING_TAG_DATA = 4; // 在解析TAG数据
 
   // Tag types.
-  private static final int TAG_TYPE_AUDIO = 8;
-  private static final int TAG_TYPE_VIDEO = 9;
-  private static final int TAG_TYPE_SCRIPT_DATA = 18;
+  private static final int TAG_TYPE_AUDIO = 8; // 音频
+  private static final int TAG_TYPE_VIDEO = 9; // 视频
+  private static final int TAG_TYPE_SCRIPT_DATA = 18; // 脚本
 
   // FLV container identifier.
   private static final int FLV_TAG = Util.getIntegerCodeForString("FLV");
@@ -59,10 +59,10 @@ public final class FlvExtractor implements Extractor, SeekMap {
 
   // State variables.
   private int parserState;
-  private int bytesToNextTagHeader;
-  public int tagType;
-  public int tagDataSize;
-  public long tagTimestampUs;
+  private int bytesToNextTagHeader; // 到下一个Tag Header的字节数
+  public int tagType; // tag类型
+  public int tagDataSize; // tag的数据区长度
+  public long tagTimestampUs; // tag的时间戳
 
   // Tags readers.
   private AudioTagPayloadReader audioReader;
@@ -179,8 +179,8 @@ public final class FlvExtractor implements Extractor, SeekMap {
     if (metadataReader == null) {
       metadataReader = new ScriptTagPayloadReader(null);
     }
-    extractorOutput.endTracks();
-    extractorOutput.seekMap(this);
+    extractorOutput.endTracks(); // track创建完成
+    extractorOutput.seekMap(this); // SeekMap已经创建好了，后面才能根据这个进行seek
 
     // We need to skip any additional content in the FLV header, plus the 4 byte previous tag size.
     bytesToNextTagHeader = headerBuffer.readInt() - FLV_HEADER_SIZE + 4;

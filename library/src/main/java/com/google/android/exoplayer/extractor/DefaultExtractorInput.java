@@ -31,10 +31,10 @@ public final class DefaultExtractorInput implements ExtractorInput {
   private final DataSource dataSource;
   private final long streamLength;
 
-  private long position;
-  private byte[] peekBuffer;
-  private int peekBufferPosition;
-  private int peekBufferLength;
+  private long position; // read的position
+  private byte[] peekBuffer; // peek的数据的缓冲区
+  private int peekBufferPosition; // peek的数据在peek数据缓冲区的位置
+  private int peekBufferLength; // peek的数据的长度
 
   /**
    * @param dataSource The wrapped {@link DataSource}.

@@ -26,11 +26,16 @@ public final class DefaultAllocator implements Allocator {
 
   private static final int AVAILABLE_EXTRA_CAPACITY = 100;
 
+  // 每个Allocation的size大小
   private final int individualAllocationSize;
+  // 初始化时分配的buffer，包括
   private final byte[] initialAllocationBlock;
 
+  // 分配了的个数
   private int allocatedCount;
+  // 可用的个数，即前availableCount个已经分配了buffer
   private int availableCount;
+  // 池子的总大小
   private Allocation[] availableAllocations;
 
   /**
@@ -80,13 +85,17 @@ public final class DefaultAllocator implements Allocator {
     return allocation;
   }
 
+  /**
+   * 释放buffer，Allocation
+   * @param allocation The {@link Allocation} being returned.
+   */
   @Override
   public synchronized void release(Allocation allocation) {
     // Weak sanity check that the allocation probably originated from this pool.
     Assertions.checkArgument(allocation.data == initialAllocationBlock
         || allocation.data.length == individualAllocationSize);
     allocatedCount--;
-    if (availableCount == availableAllocations.length) {
+    if (availableCount == availableAllocations.length) { // 池子满了，扩容
       availableAllocations = Arrays.copyOf(availableAllocations, availableAllocations.length * 2);
     }
     availableAllocations[availableCount++] = allocation;
@@ -96,7 +105,7 @@ public final class DefaultAllocator implements Allocator {
 
   @Override
   public synchronized void release(Allocation[] allocations) {
-    if (availableCount + allocations.length >= availableAllocations.length) {
+    if (availableCount + allocations.length >= availableAllocations.length) { // 扩容
       availableAllocations = Arrays.copyOf(
           availableAllocations, Math.max(
               availableAllocations.length * 2,

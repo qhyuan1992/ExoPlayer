@@ -28,6 +28,7 @@ import java.util.concurrent.ExecutorService;
 
 /**
  * Manages the background loading of {@link Loadable}s.
+ * Loader用于加载Loadable，Loadable在load时就是从文件解析音视频字节流的过程
  */
 public final class Loader {
 
@@ -44,6 +45,7 @@ public final class Loader {
 
   /**
    * Interface definition of an object that can be loaded using a {@link Loader}.
+   * 定义了一个[可加载]的资源的基本接口
    */
   public interface Loadable {
 
@@ -219,6 +221,7 @@ public final class Loader {
         executorThread = Thread.currentThread();
         if (!loadable.isLoadCanceled()) {
           TraceUtil.beginSection(loadable.getClass().getSimpleName() + ".load()");
+          // 子线程load loadable所制定的资源
           loadable.load();
           TraceUtil.endSection();
         }
